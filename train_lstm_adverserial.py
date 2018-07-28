@@ -12,8 +12,7 @@ from gpu import GPU
 import chainer
 from chainer import cuda, Function, gradient_check, report, training, utils, Variable
 from chainer import datasets, iterators, optimizers, serializers
-import autoencoder
-from Utilities import Utils
+import autoencoders.tower
 import matplotlib.pyplot as plt
 from local_config import config
 from autoencoder import Attention
@@ -41,8 +40,8 @@ class TrainLstm:
         self.model_path = "model/"
         self.image_size = image_size
         self.latent_size = latent_size
-        self.out_filepath = './processed_inputs_' + str(image_size) + '_latent_'+ str(latent_size) + '_top_path_cycled/'
-        self.batch_size = 200
+        self.out_filepath = './processed_inputs_' + str(image_size) + '_latent_'+ str(latent_size) + '_top_path_cycled_e2e/'
+        self.batch_size = 100
         self.sequence_size = 15
         self.string_size = 10
         self.hidden_dim = hidden_dimension
@@ -63,10 +62,10 @@ class TrainLstm:
         self.train_dis = True
         self.train_mdn_only = True
         self.train_lstm = False
-        self.tasks_train_on = ['5002']
+        self.tasks_train_on = ['5001', '5002']
 
         self.best_test_loss = 100
-        self.step_size = 3
+        self.step_size = 2
         self.learning_rate = 0.001
 
         print 'best_test_loss: ' + str(self.best_test_loss)

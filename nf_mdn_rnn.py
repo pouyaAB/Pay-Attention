@@ -12,7 +12,20 @@ from gpu import GPU
 
 class MDN_RNN(Chain):
     """
-    Mixure density network model.
+    To be renamed: RobotController
+    TODO: separate the inputs as 
+       image_encoding
+       task_encoding 
+
+    A network that takes as input an encoded task, an encoding z of the current camera image
+    and generates the next robot angles. 
+
+    The task is something like "pick the red towel". It is encoded as a set of 
+    one hot vectors. In our current experiments we use: movement, main object shape and main object color.
+
+    It implemented as three layers of LSTM with skip connections, layer normalization followed by an
+    MDN at the output. It is trained using behavioral cloning loss. 
+
     """
 
     def __init__(self, in_dim, hidden_dim, out_dim, num_mixture, auto_regressive=False):
@@ -46,6 +59,7 @@ class MDN_RNN(Chain):
         self.l3_.reset_state()
 
     def __call__(self, data_in=None, z=None, data_out=None, return_sample=False, train=True):
+
         with chainer.using_config('train', train), chainer.using_config('enable_backprop', train):
             xp = cuda.cupy
             sequence_len = len(z)

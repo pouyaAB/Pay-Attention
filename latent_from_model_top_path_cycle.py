@@ -13,7 +13,7 @@ from gpu import GPU
 import chainer
 from chainer import cuda, Function, gradient_check, report, training, utils, Variable
 from chainer import datasets, iterators, optimizers, serializers
-import autoencoder
+import autoencoders.tower
 from Utilities import Utils
 from local_config import config
 from image_transformer import imageTransformer
