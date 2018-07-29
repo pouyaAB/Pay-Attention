@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from local_config import config
 from autoencoder import Attention
 # from nf_rnn_vanilla import MDN_RNN
-from nf_mdn_rnn import MDN_RNN
+from nf_mdn_rnn import RobotController
 import threading
 import csv
 
@@ -108,7 +108,7 @@ class TrainLstm:
                 }
 
         # self.mdn_model = MDN_RNN(self.latent_size, self.hidden_dim, self.output_size)
-        self.mdn_model = MDN_RNN(self.latent_size + self.num_all_objects + self.num_all_objects_describtors, hidden_dimension, output_size, num_mixture, auto_regressive=False)
+        self.mdn_model = RobotController(self.latent_size + self.num_all_objects + self.num_all_objects_describtors, hidden_dimension, output_size, num_mixture, auto_regressive=False)
         # self.dis_model = autoencoder.seq_Discriminator(in_dim=self.latent_size + self.output_size + 4, hidden_dim=64)
 
         self.mdn_models = [self.mdn_model]

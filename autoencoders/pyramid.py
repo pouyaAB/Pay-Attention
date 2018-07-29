@@ -113,8 +113,8 @@ class Generator_text(chainer.Chain):
 
 class Discriminator_texual(chainer.Chain):
     """
-    A simpler version of the disciminator with 6 shared convolution layers 
-    and separate fullty-connected layers for regular and masked images.
+    A simpler version of the discriminator with 6 shared convolution layers 
+    and separate fully-connected layers for regular and masked images.
 
     
     """

@@ -28,7 +28,7 @@ from chainer import cuda, Function, gradient_check, report, training, utils, Var
 from chainer import datasets, iterators, optimizers, serializers
 import autoencoders.tower
 # from nf_mdn_rnn import MDN_RNN
-from nf_mdn_rnn import MDN_RNN
+from nf_mdn_rnn import RobotController
 from Utilities import Utils
 import matplotlib.pyplot as plt
 import cv2
@@ -86,7 +86,7 @@ class ModelTester:
                                              channel=self.num_channels, num_objects=self.num_objects, num_describtions=self.num_descs)
         self.gen_model = autoencoder.Generator_text(density=8, size=image_size, latent_size=latent_size, channel=self.num_channels * 2, 
                                                     num_objects=self.num_objects, num_describtions=self.num_descs)
-        self.mdn_model = MDN_RNN((latent_size) + self.num_descs + self.num_objects, hidden_dimension, output_size, num_mixture, auto_regressive=self.auto_regressive)
+        self.mdn_model = RobotController((latent_size) + self.num_descs + self.num_objects, hidden_dimension, output_size, num_mixture, auto_regressive=self.auto_regressive)
 
         self.dataset_path = '/home/d3gan/development/datasets/record/sth_sth_224'
         self.source_dataset_path = dataset_path

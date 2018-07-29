@@ -3,6 +3,17 @@ import numpy as np
 import os
 
 class imageTransformer:
+    """
+    imageTransformer is class to manipulate the raw input images coming from the cameras.
+    The function 'apply' can be used to apply random rotation, zoom to the image and fill the extra 
+    background with random patterns. (Tested but not used currently)
+
+    The function 'apply_homography' has a precalculated and hard coded transformation for each of the cameras,
+    which will be applied on all of the images. It can also apply this transformation with noise for regulation purposes.
+
+    Validation: The main function at the end of this file can be executed to see the before and
+    after effects of the transformations.
+    """
     def __init__(self, patterns_folder_path, read_patterns=False):
         self.patterns_folder_path = patterns_folder_path
         
@@ -79,5 +90,6 @@ class imageTransformer:
 if __name__ == '__main__':
     IT = imageTransformer("/home/d3gan/development/datasets/record/patterns")
     im = Image.open("/home/d3gan/development/datasets/record/sth_sth_224/test.jpg")
-    result = IT.apply(im)
+    im.show()
+    result = IT.apply_homography(im, 1)
     result.show()

@@ -86,29 +86,7 @@ class DatasetController:
                         "towel": 6,
                         "dumble": 7,
                         "ring": 8}
-
-        # self.objects_describtors = {"white" : 1,
-        #                 "blue": 2,
-        #                 "black-white": 3,
-        #                 "black": 4,
-        #                 "green": 5,
-        #                 "red": 6,
-        #                 "orange": 7}
-        # self.objects = {"plate": 1,
-        #                 "box": 2,
-        #                 "qr-box": 3,
-        #                 "bar": 4,
-        #                 "remote": 5,
-        #                 "spray": 6,
-        #                 "headphone": 7,
-        #                 "marker": 8,
-        #                 "dental-floss": 9,
-        #                 "flashlight": 10,
-        #                 "wire": 11,
-        #                 "usb": 12,
-        #                 "screw-driver": 13,
-        #                 "glasses": 14,
-        #                 "ear-plug": 15}
+                        
         self.objects_describtors = {self.bag_of_words[x]:y for x,y in self.objects_describtors.iteritems()}
         self.objects = {self.bag_of_words[x]:y for x,y in self.objects.iteritems()}
         self.num_all_objects = len(self.objects.keys())

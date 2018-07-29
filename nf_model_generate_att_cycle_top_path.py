@@ -16,7 +16,7 @@ import chainer
 from chainer import cuda, Function, gradient_check, report, training, utils, Variable
 from chainer import datasets, iterators, optimizers, serializers
 import autoencoders.tower
-from nf_mdn_rnn import MDN_RNN
+from nf_mdn_rnn import RobotController
 # from nf_roboinstruct_dataset_controller import DatasetController
 # from nf_movingMNIST_dataset_controller import DatasetController
 from DatasetController_morph import DatasetController

@@ -1,3 +1,11 @@
+"""
+A set of config variables which will be used mostly in the constructors of the different classes.
+This is a central config file for all the classes in the package.
+
+'locals().update(config)' has been used to add these config variables as local variable in the other python files. 
+
+"""
+
 config = {}
 
 config['image_size'] = 128

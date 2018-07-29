@@ -16,7 +16,7 @@ import chainer
 from chainer import cuda, Function, gradient_check, report, training, utils, Variable
 from chainer import datasets, iterators, optimizers, serializers
 import autoencoders.tower
-from nf_mdn_rnn import MDN_RNN
+from nf_mdn_rnn import RobotController
 # from nf_roboinstruct_dataset_controller import DatasetController
 # from nf_movingMNIST_dataset_controller import DatasetController
 from DatasetController_morph import DatasetController
@@ -125,14 +125,14 @@ class ModelController:
         print np.squeeze(objs_multi)[:sample_size]
         print np.squeeze(descs_multi)[:sample_size]
 
-        self.enc_model = autoencoder.Encoder_text_tower(density=8, size=image_size, latent_size=latent_size, channel=self.num_channels, num_objects=self.num_objects - 1, num_describtions=self.num_descs - 1)
-        self.gen_model = autoencoder.Generator_text(density=8, size=image_size, latent_size=latent_size, channel=self.num_channels * 2, num_objects=self.num_objects - 1, num_describtions=self.num_descs - 1)
+        self.enc_model = autoencoders.tower.Encoder_text_tower(density=8, size=image_size, latent_size=latent_size, channel=self.num_channels, num_objects=self.num_objects - 1, num_describtions=self.num_descs - 1)
+        self.gen_model = autoencoders.tower.Generator_text(density=8, size=image_size, latent_size=latent_size, channel=self.num_channels * 2, num_objects=self.num_objects - 1, num_describtions=self.num_descs - 1)
         # self.enc_model_att = autoencoder.Encoder_text_tower(density=8, size=image_size, latent_size=latent_size, channel=self.num_channels, num_objects=self.num_objects - 1, num_describtions=self.num_descs - 1)
         # self.gen_model_att = autoencoder.Generator_text(density=8, size=image_size, latent_size=latent_size, channel=self.num_channels, num_objects=self.num_objects - 1, num_describtions=self.num_descs - 1)
-        self.dis_model = autoencoder.Discriminator_texual(density=8, size=image_size, channel=self.num_channels,
+        self.dis_model = autoencoders.tower.Discriminator_texual(density=8, size=image_size, channel=self.num_channels,
                                                          num_words=self.vocabularySize, num_objects=self.num_objects, num_describtions=self.num_descs)
         # self.det_model = autoencoder.Detector(latent_size=latent_size, num_objects=self.num_objects, num_describtions=self.num_descs)
-        self.mdn_model = MDN_RNN(self.latent_size + self.num_objects + self.num_descs - 2, hidden_dimension, output_size, num_mixture, auto_regressive=False)
+        self.mdn_model = RobotController(self.latent_size + self.num_objects + self.num_descs - 2, hidden_dimension, output_size, num_mixture, auto_regressive=False)
         # self.det_model_att = autoencoder.Detector(latent_size=latent_size, num_objects=self.num_objects, num_describtions=self.num_descs)
 
         self.enc_models = [self.enc_model]
@@ -399,11 +399,13 @@ class ModelController:
         # reconstruction_loss_whole = F.mean_squared_error(x0_whole_att, x_in)
         
 
+
         z0_seq = F.reshape(z0, (self.sequence_size, gpu_batch_size, self.latent_size))
         seq_objects_one_hot = np.reshape(objects_one_hot, (self.sequence_size, gpu_batch_size, -1))
         seq_descs_one_hot = np.reshape(descs_one_hot, (self.sequence_size, gpu_batch_size, -1))
-        latents = F.concat((z0_seq, Variable(cuda.to_gpu(seq_objects_one_hot, g)), Variable(cuda.to_gpu(seq_descs_one_hot, g))), axis=-1)
-        mdn_loss, _ = self.mdn_models[k](data_in=batch_one_hot, z=latents[:-1], data_out=joints[1:], return_sample=False)
+        # latents = F.concat((z0_seq, Variable(cuda.to_gpu(seq_objects_one_hot, g)), Variable(cuda.to_gpu(seq_descs_one_hot, g))), axis=-1)
+        task_encoding = F.concat((batch_one_hot, Variable(cuda.to_gpu(seq_objects_one_hot[0], g)), Variable(cuda.to_gpu(seq_descs_one_hot[0], g))), axis=-1)
+        mdn_loss, _ = self.mdn_models[k](task_encoding=task_encoding, image_encoding=z0_seq[:-1], data_out=joints[1:], return_sample=False)
         # z00, mean00, var00 = self.enc_models_att[k](x0_att, Variable(cuda.to_gpu(objects_one_hot, g)), Variable(cuda.to_gpu(descs_one_hot, g)), train=self.train_autoencoder)
         # z00_att, mean00_att, var00_att = self.enc_models[k](x0_whole_att, Variable(cuda.to_gpu(objects_one_hot, g)), Variable(cuda.to_gpu(descs_one_hot, g)), train=self.train_autoencoder)
         

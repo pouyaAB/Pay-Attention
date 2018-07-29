@@ -10,12 +10,8 @@ import chainer.links as L
 from gpu import GPU
 
 
-class MDN_RNN(Chain):
+class RobotController(Chain):
     """
-    To be renamed: RobotController
-    TODO: separate the inputs as 
-       image_encoding
-       task_encoding 
 
     A network that takes as input an encoded task, an encoding z of the current camera image
     and generates the next robot angles. 
@@ -39,7 +35,7 @@ class MDN_RNN(Chain):
             self.future_out_dim = 1
         else:
             self.future_out_dim = out_dim
-        super(MDN_RNN, self).__init__(
+        super(RobotController, self).__init__(
             ln1_=L.LayerNormalization(),
             ln2_=L.LayerNormalization(),
             ln3_=L.LayerNormalization(),
@@ -58,17 +54,12 @@ class MDN_RNN(Chain):
         self.l2_.reset_state()
         self.l3_.reset_state()
 
-    def __call__(self, data_in=None, z=None, data_out=None, return_sample=False, train=True):
+    def __call__(self, task_encoding=None, image_encoding=None, data_out=None, return_sample=False, train=True):
 
         with chainer.using_config('train', train), chainer.using_config('enable_backprop', train):
             xp = cuda.cupy
-            sequence_len = len(z)
-            # batch_h = Variable(xp.empty((0, np.shape(data_in)[1], self.HIDDEN_DIM), dtype=np.float32))
-
-            # data_in = F.expand_dims(data_in, axis=0)
-            # data_in = F.tile(data_in, (sequence_len, 1, 1))
-            # x = F.concat((data_in, z), axis=2)
-            x = z
+            sequence_len = len(image_encoding)
+            x = image_encoding
             y = data_out
             
             if self.AUTO_REGRESSIVE:
@@ -85,7 +76,7 @@ class MDN_RNN(Chain):
             last_joint = Variable(xp.zeros(y.shape[1:], dtype=np.float32))
             sample_toRet = np.zeros(self.OUT_DIM, dtype=np.float32)
             for j in range(sequence_len):
-                batch_cost, sample = self.process_batch(x[j], y[j], data_in, last_joint, return_sample=True)
+                batch_cost, sample = self.process_batch(x[j], y[j], task_encoding, last_joint, return_sample=True)
                 last_joint = sample
                 if self.AUTO_REGRESSIVE:
                     sample_toRet[j % self.OUT_DIM] = cuda.to_cpu(sample.data)[0, 0]
@@ -125,30 +116,13 @@ class MDN_RNN(Chain):
         y_broad = F.broadcast_to(y, mu.shape)
         normalizer = 2 * np.pi * sigma
         exponent = -0.5 * (1. / F.square(sigma)) * F.sum((y_broad - mu) ** 2, axis=1) + F.log(mixing) - (self.future_out_dim * 0.5) * F.log(normalizer)
-        # if not flag:
         cost = -F.logsumexp(exponent, axis=1)
         cost = F.mean(cost)
-        # else:
-        #     max_exponent = F.max(exponent, axis=1, keepdims=True)
-        #     mod_exponent = exponent - F.broadcast_to(max_exponent, exponent.shape)
-        #     gauss_mix = F.sum(F.exp(mod_exponent), axis=1, keepdims=True)
-        #     log_gauss = F.log(gauss_mix) + max_exponent
-            
-        #     cost = -F.mean(log_gauss * y[:, -1])
-        # cost = F.mean_squared_error(y, mu)
         #sampling
         if return_sample:
             mixing = mixing_orig * (1 + self.sampling_bias)
             sigma = F.softplus(sigma_orig - self.sampling_bias)
             mixing = F.softmax(mixing)
-            # max_mixing = F.broadcast_to(F.max(mixing, axis=2, keepdims=True), mixing.shape)
-            # e_x = F.exp(mixing - max_mixing)
-            # e_x_sum = F.broadcast_to(F.sum(e_x, axis=2, keepdims=True), e_x.shape)
-            # mixing = e_x / e_x_sum
-            # component = xp.zeros(mixing.shape, dtype=xp.float32)
-            # for i in range(mixing.shape[0]):
-            #     component[i] = xp.random.multinomial(1, pvals=mixing[i].data)
-            # component_expanded = F.broadcast_to(F.expand_dims(component, axis=1), mu.shape)
             argmax_mixing = F.argmax(mixing, axis=1)
             mixing_one_hot = xp.zeros(mixing.shape, dtype=xp.float32)
             mixing_one_hot[xp.arange(mixing.shape[0]), argmax_mixing.data] = 1
