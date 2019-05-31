@@ -101,6 +101,10 @@ class DatasetController_multi_object:
         self.test_images = {}
         self.separate_train_test()
 
+        self.attention_dics = {}
+        for task in self.tasks:
+            self.attention_dics[str(task)] = np.load(os.path.join(self.out_filepath_attention, str(task), '1', 'camera-1.npy')).item()
+
     def separate_train_test(self):
         for task_id in self.tasks:
             task_path = os.path.join(self.dest_multi_object_dataset_path, str(task_id))
@@ -164,6 +168,9 @@ class DatasetController_multi_object:
 
         num_dems = len(folders)
         rand_dem = np.random.randint(num_dems, size=1)[0]
+
+        while folders[rand_dem] not in self.attention_dics[str(task_id)]:
+            rand_dem = np.random.randint(num_dems, size=1)[0]
 
         return task_id, folders[rand_dem]
 
@@ -255,30 +262,32 @@ class DatasetController_multi_object:
         return images, toRet_cropped_att
 
     def get_next_batch(self, train=True, camera='camera-1', use_vgg=False):
-        original_robot_images = np.empty(
-            (self.batch_size * self.sequence_size, 1, self.num_channels, self.image_size, self.image_size))
-        robot_images = np.empty(
-            (self.batch_size * self.sequence_size, 1, self.num_channels, self.image_size, self.image_size))
-        robot_attentions = np.empty(
-            (self.batch_size * self.sequence_size, 1, self.attention_size, self.attention_size))
-        toRet_robot_cropped_attentions = np.empty(
-            (self.batch_size * self.sequence_size, 1, 3, self.image_size, self.image_size))
-
-        attention_sentence = np.zeros((self.batch_size * self.sequence_size, self.string_size))
-        object_involved = np.zeros((self.batch_size * self.sequence_size))
-        describtors_involved = np.zeros((self.batch_size * self.sequence_size))
-
-        object_involved_one_hot = np.zeros((self.batch_size * self.sequence_size, self.num_all_objects))
-        describtors_involved_one_hot = np.zeros((self.batch_size * self.sequence_size, self.num_all_objects_describtors))
-        wrong_object_involved_one_hot = np.zeros((self.batch_size * self.sequence_size, self.num_all_objects))
-        wrong_describtors_involved_one_hot = np.zeros((self.batch_size * self.sequence_size, self.num_all_objects_describtors))
 
         while True:
+            original_robot_images = np.empty(
+                (self.batch_size * self.sequence_size, 1, self.num_channels, self.image_size, self.image_size))
+            robot_images = np.empty(
+                (self.batch_size * self.sequence_size, 1, self.num_channels, self.image_size, self.image_size))
+            robot_attentions = np.empty(
+                (self.batch_size * self.sequence_size, 1, self.attention_size, self.attention_size))
+            toRet_robot_cropped_attentions = np.empty(
+                (self.batch_size * self.sequence_size, 1, 3, self.image_size, self.image_size))
+
+            attention_sentence = np.zeros((self.batch_size * self.sequence_size, self.string_size))
+            object_involved = np.zeros((self.batch_size * self.sequence_size))
+            describtors_involved = np.zeros((self.batch_size * self.sequence_size))
+
+            object_involved_one_hot = np.zeros((self.batch_size * self.sequence_size, self.num_all_objects))
+            describtors_involved_one_hot = np.zeros((self.batch_size * self.sequence_size, self.num_all_objects_describtors))
+            wrong_object_involved_one_hot = np.zeros((self.batch_size * self.sequence_size, self.num_all_objects))
+            wrong_describtors_involved_one_hot = np.zeros((self.batch_size * self.sequence_size, self.num_all_objects_describtors))
+
             for i in range(self.batch_size * self.sequence_size):
                 task_id, dem_index = self.get_random_demonstration(train=train)
                 # print np.shape(joints), np.shape(images['camera-0'])
-                attention_dic = np.load(os.path.join(self.out_filepath_attention, str(task_id), '1', 'camera-1.npy')).item()
-                
+                # attention_dic = np.load(os.path.join(self.out_filepath_attention, str(task_id), '1', 'camera-1.npy')).item()
+                attention_dic = self.attention_dics[str(task_id)]
+
                 atts = attention_dic[dem_index]
                 robot_attentions[i, 0] = atts
 

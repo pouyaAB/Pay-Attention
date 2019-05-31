@@ -700,11 +700,18 @@ class ModelController:
                 z, _, _ = self.enc_models[0](Variable(x_in), Variable(obj_one_hot_batch_for_gpu_xp), Variable(descs_one_hot_batch_for_gpu_xp), train=False)
                 data_att = self.gen_models[0](z, Variable(obj_one_hot_batch_for_gpu_xp), Variable(descs_one_hot_batch_for_gpu_xp), train=False)
 
-                z0_seq = F.reshape(z, (self.sequence_size, self.batch_size // GPU.num_gpus, self.latent_size))
-                seq_objects_one_hot = np.reshape(obj_one_hot_batch_for_gpu, (self.sequence_size, self.batch_size // GPU.num_gpus, -1))
-                seq_descs_one_hot = np.reshape(descs_one_hot_batch_for_gpu, (self.sequence_size, self.batch_size // GPU.num_gpus, -1))
-                latents = F.concat((z0_seq, Variable(cuda.to_gpu(seq_objects_one_hot, GPU.main_gpu)), Variable(cuda.to_gpu(seq_descs_one_hot, GPU.main_gpu))), axis=-1)
-                mdn_loss, _ = self.mdn_models[0](data_in=batch_one_hot, z=latents[:-1], data_out=joints[1:], return_sample=False, train=False)
+                z0_seq = F.reshape(z, (self.sequence_size, self.batch_size// GPU.num_gpus, self.latent_size))
+                seq_objects_one_hot = np.reshape(obj_one_hot_batch_for_gpu, (self.sequence_size, self.batch_size// GPU.num_gpus, -1))
+                seq_descs_one_hot = np.reshape(descs_one_hot_batch_for_gpu, (self.sequence_size, self.batch_size// GPU.num_gpus, -1))
+                # latents = F.concat((z0_seq, Variable(cuda.to_gpu(seq_objects_one_hot, g)), Variable(cuda.to_gpu(seq_descs_one_hot, g))), axis=-1)
+                task_encoding = F.concat((batch_one_hot, Variable(cuda.to_gpu(seq_objects_one_hot[0], GPU.main_gpu)), Variable(cuda.to_gpu(seq_descs_one_hot[0], GPU.main_gpu))), axis=-1)
+                mdn_loss, _ = self.mdn_models[0](task_encoding=task_encoding, image_encoding=z0_seq[:-1], data_out=joints[1:], return_sample=False, train=False)
+
+                # z0_seq = F.reshape(z, (self.sequence_size, self.batch_size // GPU.num_gpus, self.latent_size))
+                # seq_objects_one_hot = np.reshape(obj_one_hot_batch_for_gpu, (self.sequence_size, self.batch_size // GPU.num_gpus, -1))
+                # seq_descs_one_hot = np.reshape(descs_one_hot_batch_for_gpu, (self.sequence_size, self.batch_size // GPU.num_gpus, -1))
+                # latents = F.concat((z0_seq, Variable(cuda.to_gpu(seq_objects_one_hot, GPU.main_gpu)), Variable(cuda.to_gpu(seq_descs_one_hot, GPU.main_gpu))), axis=-1)
+                # mdn_loss, _ = self.mdn_models[0](data_in=batch_one_hot, z=latents[:-1], data_out=joints[1:], return_sample=False, train=False)
                 # z0, _, _ = self.enc_models_att[0](data_att, Variable(obj_one_hot_batch_for_gpu), Variable(descs_one_hot_batch_for_gpu), train=False)
                 # data_whole = self.gen_models_att[0](z0, Variable(obj_one_hot_batch_for_gpu), Variable(descs_one_hot_batch_for_gpu), train=False)
 

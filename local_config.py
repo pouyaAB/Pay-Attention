@@ -21,7 +21,7 @@ config['camera_topics'] = ['/camera1/usb_cam1/image_raw', '/camera2/usb_cam2/ima
 config['task'] = '5001'
 
 config['tasks'] = ['5001', '5002', '5003', '5004']
-config['batch_size'] = 20
+config['batch_size'] = 12
 config['sequence_size'] = 4
 config['csv_col_num'] = 10
 config['num_channels'] = 3

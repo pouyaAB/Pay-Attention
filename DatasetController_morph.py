@@ -284,37 +284,37 @@ class DatasetController:
         return images, toRet_att, toRet_cropped_att
 
     def get_next_batch(self, task=None, sth_sth=False, human=False, joint_history=0, channel_first=True, from_start=False, from_start_prob=0.1, train=True, camera='camera-1', use_vgg=False):
-        human_images = np.empty(
-            (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
-        human_paths = []
-        original_robot_images = np.empty(
-            (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
-        robot_images = np.empty(
-            (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
-        robot_images_secondary = np.empty(
-            (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
-        robot_attentions = np.empty(
-            (self.batch_size, self.sequence_size, self.attention_size, self.attention_size))
-        toRet_robot_attentions = np.empty(
-            (self.batch_size, self.sequence_size, 1, self.image_size, self.image_size))
-        toRet_robot_cropped_attentions = np.empty(
-            (self.batch_size, self.sequence_size, 3, self.image_size, self.image_size))
-        robot_paths = []
-        sth_sth_images = np.empty(
-            (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
-        sth_sth_paths = []
-        batch_joints = np.empty((self.batch_size, self.sequence_size + joint_history, self.csv_col_num))
-
-        attention_sentence = np.zeros((self.batch_size, self.string_size))
-        object_involved = np.zeros((self.batch_size))
-        describtors_involved = np.zeros((self.batch_size))
-
-        object_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects))
-        describtors_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects_describtors))
-        wrong_object_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects))
-        wrong_describtors_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects_describtors))
 
         while True:
+            human_images = np.empty(
+                (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
+            human_paths = []
+            original_robot_images = np.empty(
+                (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
+            robot_images = np.empty(
+                (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
+            robot_images_secondary = np.empty(
+                (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
+            robot_attentions = np.empty(
+                (self.batch_size, self.sequence_size, self.attention_size, self.attention_size))
+            toRet_robot_attentions = np.empty(
+                (self.batch_size, self.sequence_size, 1, self.image_size, self.image_size))
+            toRet_robot_cropped_attentions = np.empty(
+                (self.batch_size, self.sequence_size, 3, self.image_size, self.image_size))
+            robot_paths = []
+            sth_sth_images = np.empty(
+                (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
+            sth_sth_paths = []
+            batch_joints = np.empty((self.batch_size, self.sequence_size + joint_history, self.csv_col_num))
+
+            attention_sentence = np.zeros((self.batch_size, self.string_size))
+            object_involved = np.zeros((self.batch_size))
+            describtors_involved = np.zeros((self.batch_size))
+
+            object_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects))
+            describtors_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects_describtors))
+            wrong_object_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects))
+            wrong_describtors_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects_describtors))
             human_paths = []
             robot_paths = []
             sth_sth_paths = []
