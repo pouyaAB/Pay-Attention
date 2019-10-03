@@ -10,8 +10,6 @@ config = {}
 
 config['image_size'] = 128
 config['dataset_path'] = '/home/d3gan/development/datasets/record/sth_sth_' + str(config['image_size'])
-config['sth_sth_path'] = '/home/d3gan/development/datasets/20BN_something_' + str(config['image_size'])
-config['multi_object_dataset_path'] = '/home/d3gan/development/datasets/record/multi_object_' + str(config['image_size'])
 
 config['cameras'] = ['camera-1']
 

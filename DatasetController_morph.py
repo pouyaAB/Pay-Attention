@@ -49,12 +49,6 @@ class DatasetController:
         
         self.out_filepath_attention = './processed_inputs_attention_28_new_objects/'
 
-        self.source_sth_sth_path = sth_sth_path
-        if read_jpgs:
-            self.dest_sth_sth_path = self.source_sth_sth_path
-        else:
-            self.dest_sth_sth_path = sth_sth_path + '_compressed'
-        
         self.joints_std = { 5001: [0.0, 0.1859, 0.0752, 0.0862, 0.0814, 0.2842, 0.0],
                             5002: [0.0, 0.2066, 0.0874, 0.0942, 0.0658, 0.2066, 0.0],
                             5003: [0.0, 0.1723, 0.0741, 0.0936, 0.0651, 0.1722, 0.0],
@@ -70,10 +64,9 @@ class DatasetController:
 
         if not read_jpgs:
             create_dir(self.dest_dataset_path)
-            create_dir(self.dest_sth_sth_path)
         self.step_size = 2
 
-        self.objects_describtors = {"white" : 1,
+        self.objects_descriptions = {"white" : 1,
                         "blue": 2,
                         "black-white": 3,
                         "black": 4,
@@ -87,14 +80,11 @@ class DatasetController:
                         "dumble": 7,
                         "ring": 8}
                         
-        self.objects_describtors = {self.bag_of_words[x]:y for x,y in self.objects_describtors.iteritems()}
+        self.objects_descriptions = {self.bag_of_words[x]:y for x,y in self.objects_descriptions.iteritems()}
         self.objects = {self.bag_of_words[x]:y for x,y in self.objects.iteritems()}
         self.num_all_objects = len(self.objects.keys())
-        self.num_all_objects_describtors = len(self.objects_describtors.keys())
+        self.num_all_objects_descriptions = len(self.objects_descriptions.keys())
 
-        if not read_jpgs and not os.path.exists(os.path.join(self.dest_sth_sth_path, 'complete')):
-            self.process_sth_sth()
-            open(os.path.join(self.dest_sth_sth_path, 'complete'), 'w+').close()
         if not read_jpgs and not os.path.exists(os.path.join(self.dest_dataset_path, 'complete')):
             self.process_dataset()
             open(os.path.join(self.dest_dataset_path, 'complete'), 'w+').close()
@@ -106,9 +96,6 @@ class DatasetController:
 
     def separate_train_train(self):
         for task_id in self.annotated_tasks:
-            # task_path = os.path.join(self.dest_dataset_path, task_id)
-            # folders = [name for name in os.listdir(task_path) if os.path.isdir(os.path.join(task_path, name))]
-
             folders = self.reverse_annotations[int(task_id)].keys()
             random.shuffle(folders)
             num_folders = len(folders)
@@ -162,7 +149,6 @@ class DatasetController:
         return bag
 
     def get_random_demonstration(self, task_id, train=True):
-        # print len(self.tasks.keys()), self.tasks.keys()[rand_task]
         if task_id is None:
             rand_task = np.random.randint(len(self.tasks), size=1)[0]
             task_id = self.tasks[rand_task]
@@ -203,11 +189,11 @@ class DatasetController:
                 random_wrong_key = np.random.randint(len(wrong_labels), size=1)[0]
                 wrong_which_object = self.objects[int(wrong_labels[random_wrong_key])]
                 which_object = self.objects[int(label)]
-            if which_describtor == 0 and int(label) in self.objects_describtors:
-                wrong_labels = [item for item in self.objects_describtors.keys() if item not in [int(label)]]
+            if which_describtor == 0 and int(label) in self.objects_descriptions:
+                wrong_labels = [item for item in self.objects_descriptions.keys() if item not in [int(label)]]
                 random_wrong_key = np.random.randint(len(wrong_labels), size=1)[0]
-                wrong_which_describtor = self.objects_describtors[int(wrong_labels[random_wrong_key])]
-                which_describtor = self.objects_describtors[int(label)]
+                wrong_which_describtor = self.objects_descriptions[int(wrong_labels[random_wrong_key])]
+                which_describtor = self.objects_descriptions[int(label)]
 
         return key_toRet, which_object, which_describtor, wrong_which_object, wrong_which_describtor
 
@@ -221,39 +207,8 @@ class DatasetController:
 
         return np.asarray(np.random.normal(loc=joints, scale=final_std), dtype=np.float32)
 
-    def extract_att_rect(self, att, image):
-        att_h = att.shape[-1]
-        image_h = image.shape[0]
-        att_loc = np.argmax(att)
-        rect_c_x = att_loc % att_h
-        rect_c_y = att_loc // att_h
-        offset = (image_h / 4)
-        rect_x0 = rect_c_x - offset
-        rect_x1 = rect_c_x + offset
-
-        rect_y0 = rect_c_y - offset
-        rect_y1 = rect_c_y + offset
-
-        if rect_x0 < 0:
-            rect_x0 = 0
-            rect_x1 = 2 * offset
-        if rect_x1 > image_h:
-            rect_x1 = image_h
-            rect_x0 = image_h - 2 * offset
-        
-        if rect_y0 < 0:
-            rect_y0 = 0
-            rect_y1 = 2 * offset
-        if rect_y1 > image_h:
-            rect_y1 = image_h
-            rect_y0 = image_h - 2 * offset
-        
-        return image[rect_y0: rect_y1, rect_x0 : rect_x1]
-
-
     def morph_attention_and_image(self, images, attentions):
         toRet_att = np.empty((images.shape[0], self.sequence_size, 1, self.image_size, self.image_size))
-        toRet_cropped_att = np.empty((images.shape[0], self.sequence_size, 3, self.image_size, self.image_size))
 
         for i in range(images.shape[0]):
             for j in range(images.shape[1]):
@@ -264,70 +219,40 @@ class DatasetController:
                     att[:] = 0
                     rand_w, rand_h= np.random.randint(att.shape[-1], size=2)
                     att[0,0, rand_w, rand_h] = 1
-                # print np.sum(att)
-                # plt.imshow(att[0][0], cmap='gray')
-                # plt.show()
                 image = images[i][j].transpose((1, 2, 0))
                 att = scipy.ndimage.zoom(att[0,0], (self.image_size / float(att.shape[2]), self.image_size / float(att.shape[2])), order=1)
                 image = image * att[:, :, np.newaxis]
-                cropped_image = self.extract_att_rect(att, image)
-                # cropped_image = image[att_loc_x * scaler: (att_loc_x + 1) * scaler, att_loc_y * scaler: (att_loc_y + 1) * scaler]
                 
-                cropped_image = transform.resize(cropped_image, (self.image_size, self.image_size))
                 images[i, j] = image.transpose((2, 0, 1))
-                toRet_cropped_att[i, j] = cropped_image.transpose((2, 0, 1))
-                # im = Image.fromarray(np.uint8(((cropped_image + 1) * 127.5)))
-                # im.show()
-                # im = Image.fromarray(np.uint8(((image + 1) * 127.5)))
-                # im.show()
         
-        return images, toRet_att, toRet_cropped_att
+        return images, toRet_att
 
     def get_next_batch(self, task=None, sth_sth=False, human=False, joint_history=0, channel_first=True, from_start=False, from_start_prob=0.1, train=True, camera='camera-1', use_vgg=False):
 
         while True:
             human_images = np.empty(
                 (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
-            human_paths = []
             original_robot_images = np.empty(
                 (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
             robot_images = np.empty(
-                (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
-            robot_images_secondary = np.empty(
                 (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
             robot_attentions = np.empty(
                 (self.batch_size, self.sequence_size, self.attention_size, self.attention_size))
             toRet_robot_attentions = np.empty(
                 (self.batch_size, self.sequence_size, 1, self.image_size, self.image_size))
-            toRet_robot_cropped_attentions = np.empty(
-                (self.batch_size, self.sequence_size, 3, self.image_size, self.image_size))
-            robot_paths = []
             sth_sth_images = np.empty(
                 (self.batch_size, self.sequence_size, self.num_channels, self.image_size, self.image_size))
-            sth_sth_paths = []
             batch_joints = np.empty((self.batch_size, self.sequence_size + joint_history, self.csv_col_num))
 
-            attention_sentence = np.zeros((self.batch_size, self.string_size))
             object_involved = np.zeros((self.batch_size))
-            describtors_involved = np.zeros((self.batch_size))
+            descriptions_involved = np.zeros((self.batch_size))
 
             object_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects))
-            describtors_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects_describtors))
-            wrong_object_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects))
-            wrong_describtors_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects_describtors))
-            human_paths = []
-            robot_paths = []
-            sth_sth_paths = []
+            descriptions_involved_one_hot = np.zeros((self.batch_size, self.num_all_objects_descriptions))
             for i in range(self.batch_size):
-
-                # while True:
                 task_id, dem_index = self.get_random_demonstration(task, train=train)
-                # print np.shape(joints), np.shape(images['camera-0'])
                 joints = np.load(os.path.join(self.dest_dataset_path, task_id, str(dem_index) + '-joints.npy'))
                 attention = np.load(os.path.join(self.out_filepath_attention, task_id, dem_index, 'camera-1.npy'))
-                # if self.shuffle_att:
-                #     np.random.shuffle(attention)
-                # if len(joints) > self.step_size * self.sequence_size:
 
                 # appending the beggining of the sequence with (joint_history) * self.step_size copies of the first joint angle
                 first_joint = np.expand_dims(joints[0], axis=0)
@@ -354,52 +279,21 @@ class DatasetController:
                 if from_start:
                     robot_rand_index = 0
 
-                # if robot_rand_index + self.sequence_size * self.step_size > joints_len:
-                #     last_joint = np.expand_dims(joints[-1], axis=0)
-                #     last_joint = np.repeat(last_joint, (robot_rand_index + self.sequence_size * self.step_size) - joints_len, axis=0)
-                #     joints = np.concatenate((joints, last_joint), axis=0)
-                # break
                 robot_images_start_index = robot_rand_index + joint_history * self.step_size
                 
                 stage = float(robot_images_start_index) / joints_len
                 stage = int(stage * 10)
-                # for a in range(robot_images_start_index, robot_images_start_index + self.step_size * self.sequence_size, self.step_size):
-                #     c = float(a) / joints_len
-                #     c = int(c * 10)
-                #     completeness[i, (a - robot_images_start_index)/self.step_size, c] = 1
-
                 original_robot_images[i], robot_path, camera_used = self.read_robot_npy_batch(task_id, dem_index, camera,
                                                          joints[robot_images_start_index: robot_images_start_index + self.step_size * self.sequence_size, 0],  use_vgg=use_vgg)
-                # robot_images_secondary[i], _, _ = self.read_robot_npy_batch(task_id, dem_index, camera_used,
-                #                                          joints[robot_images_start_index: robot_images_start_index + self.step_size * self.sequence_size, 0], not_this_camera=True, use_vgg=use_vgg)
                 robot_attentions[i] = attention[robot_rand_index: robot_rand_index + self.step_size * self.sequence_size: self.step_size]
-                robot_paths.append(robot_path)
                 robot_images[i] = np.copy(original_robot_images[i])
                 if camera_used == 'camera-1':
-                    robot_images_temp, toRet_robot_attentions, toRet_robot_cropped_attentions_temp = self.morph_attention_and_image(robot_images[i][np.newaxis], robot_attentions[i])
+                    robot_images_temp, toRet_robot_attentions = self.morph_attention_and_image(robot_images[i][np.newaxis], robot_attentions[i])
                     robot_images[i] = robot_images_temp[0]
-                    toRet_robot_cropped_attentions[i] = toRet_robot_cropped_attentions_temp[0]
-
-                if sth_sth:
-                    sth_sth_images[i], sth_sth_path = self.read_sth_sth_npy_batch(task_id)
-                    sth_sth_paths.append(sth_sth_path)
 
                 if human:
                     human_images[i], human_path = self.read_human_npy_batch(task_id, dem_index, camera)
                     human_paths.append(human_path)
-
-                # history_index = robot_rand_index - joint_history * self.step_size
-                # if history_index >= 0:
-                #     batch_joints[i] = joints[history_index: robot_rand_index + self.step_size * self.sequence_size: self.step_size]
-                # else:
-                #     half = joints[0: robot_rand_index + self.step_size * self.sequence_size: self.step_size]
-                #     # print self.sequence_size + joint_history - len(half), -history_index/self.step_size
-                #     #[1.0, 0.7670000195503235, 0.7925000190734863, 0.6265000104904175, 0.4659999907016754, 0.6579999923706055, 0.0]
-                #     to_rep = np.asarray([[0.0 ,0.0 ,0.0 ,1.0, 0.7670000195503235, 0.7925000190734863, 0.6265000104904175, 0.4659999907016754,
-                #                  0.6579999923706055, 0.0]])
-                #     ohalf = np.repeat(to_rep, self.sequence_size + joint_history - len(half), axis=0)
-                #     # ohalf = np.zeros((self.sequence_size + joint_history - len(half), self.csv_col_num))
-                #     batch_joints[i] = np.concatenate((ohalf, half), axis=0)
 
                 batch_joints[i] = joints[robot_rand_index: robot_rand_index + (self.sequence_size + joint_history) * self.step_size: self.step_size]
 
@@ -407,20 +301,13 @@ class DatasetController:
                     label, which_object, which_describtor, wrong_which_object, wrong_which_describtor = self.get_attention_label(task_id, dem_index)
                     object_involved[i] = which_object
                     object_involved_one_hot[i, which_object - 1] = 1
-                    wrong_object_involved_one_hot[i, wrong_which_object - 1] = 1
-                    describtors_involved[i] = which_describtor
-                    describtors_involved_one_hot[i, which_describtor - 1] = 1
-                    wrong_describtors_involved_one_hot[i, wrong_which_describtor - 1] = 1
-                    attention_sentence[i] = label
+                    descriptions_involved[i] = which_describtor
+                    descriptions_involved_one_hot[i, which_describtor - 1] = 1
             
             batch_one_hot = self.get_task_one_hot_vector(batch_joints)
-            # original_robot_images = np.copy(robot_images)
-            # if camera_used == 'camera-1':
-            #     robot_images, toRet_robot_attentions = self.morph_attention_and_image(robot_images, robot_attentions)
             to_ret_human_images = human_images
             to_ret_robot_images = robot_images
             to_ret_original_robot_images = original_robot_images
-            to_ret_robot_images_secondary = robot_images_secondary
             to_ret_sth_sth_images = sth_sth_images
             if not channel_first:
                 to_ret_robot_images = np.swapaxes(robot_images, 2, -1)
@@ -428,9 +315,6 @@ class DatasetController:
 
                 to_ret_original_robot_images = np.swapaxes(original_robot_images, 2, -1)
                 to_ret_original_robot_images = np.swapaxes(to_ret_original_robot_images, 2, 3)
-
-                to_ret_robot_images_secondary = np.swapaxes(robot_images_secondary, 2, -1)
-                to_ret_robot_images_secondary = np.swapaxes(to_ret_robot_images_secondary, 2, 3) 
 
                 to_ret_human_images = np.swapaxes(human_images, 2, -1)
                 to_ret_human_images = np.swapaxes(to_ret_human_images, 2, 3)
@@ -443,11 +327,10 @@ class DatasetController:
             else:
                 noisy_joints = batch_joints[:, :, 3:]
 
-            yield to_ret_robot_images, to_ret_original_robot_images, toRet_robot_cropped_attentions, to_ret_robot_images_secondary, toRet_robot_attentions, robot_paths, \
-                to_ret_human_images, human_paths, \
-                to_ret_sth_sth_images, sth_sth_paths, \
-                batch_joints[:, :, 3:], noisy_joints, batch_one_hot, attention_sentence, \
-                object_involved, object_involved_one_hot, describtors_involved, describtors_involved_one_hot, wrong_object_involved_one_hot, wrong_describtors_involved_one_hot
+            yield to_ret_robot_images, to_ret_original_robot_images, toRet_robot_attentions, \
+                to_ret_human_images, to_ret_sth_sth_images, \
+                batch_joints[:, :, 3:], noisy_joints, batch_one_hot, \
+                object_involved, object_involved_one_hot, descriptions_involved, descriptions_involved_one_hot
 
     def read_robot_npy_batch(self, task_id, dem_index, camera, timestamps, not_this_camera=False, use_vgg=False):
         if camera == 'random':
@@ -463,8 +346,6 @@ class DatasetController:
 
         images = np.empty((self.sequence_size, self.num_channels, self.image_size, self.image_size))
         npys_path = os.path.join(self.dest_dataset_path, task_id, dem_index, 'robot', camera)
-        # print [str(x) for x in timestamps]
-        # print len(timestamps)
         for i in range(0, len(timestamps), self.step_size):
             # print ts
             if self.read_jpgs:
@@ -477,29 +358,6 @@ class DatasetController:
         paths = np.fromstring(path[::-1].zfill(200)[::-1], dtype=np.uint8)
 
         return images, paths, camera
-
-    def read_sth_sth_npy_batch(self, task_id):
-        images = np.empty((self.sequence_size, self.num_channels, self.image_size, self.image_size))
-        task_path = os.path.join(self.dest_sth_sth_path, task_id)
-        
-        dems = [name for name in os.listdir(task_path) if os.path.isdir(os.path.join(task_path, name))]
-        dem_index = np.random.randint(len(dems), size=1)[0]
-        images_list = os.listdir(os.path.join(task_path, dems[dem_index]))
-        rand_index = np.random.randint(len(images_list) - self.sequence_size, size=1)[0]
-        count = 0
-        while count < self.sequence_size:
-            if self.read_jpgs:
-                path = os.path.join(os.path.join(task_path, dems[dem_index]), str(int(rand_index + count + 1)).zfill(5) + '.jpg')
-                image = self.read_image(path)
-                images[count] = self.pre_process_image(image)
-            else:
-                path = os.path.join(os.path.join(task_path, dems[dem_index]), str(int(rand_index + count + 1)) + '.npy')
-                images[count] = np.load(path)
-            
-            count += 1
-        paths = np.fromstring(path[::-1].zfill(200)[::-1], dtype=np.uint8)
-
-        return images, paths
 
     def read_human_npy_batch(self, task_id, dem_index, camera):
         if camera == 'random':
@@ -526,27 +384,11 @@ class DatasetController:
 
         return images, paths
 
-    def process_sth_sth(self):
-        for dir_name in os.listdir(self.source_sth_sth_path):
-            if os.path.isdir(os.path.join(self.source_sth_sth_path, dir_name)):
-                print('Found directory in sth sth: %s' % dir_name)
-                self.process_sth_sth_tasks(dir_name)
-
     def process_dataset(self):
         for dir_name in os.listdir(self.source_dataset_path):
             if os.path.isdir(os.path.join(self.source_dataset_path, dir_name)) and int(dir_name) in self.reverse_annotations.keys():
                 print('Found directory: %s' % dir_name)
                 self.process_tasks(dir_name)
-
-    def process_sth_sth_tasks(self, dir_name):
-        source = os.path.join(self.source_sth_sth_path, dir_name)
-        dest = os.path.join(self.dest_sth_sth_path, dir_name)
-        create_dir(os.path.join(self.dest_sth_sth_path, dir_name))
-
-        for subdir_name in os.listdir(source):
-            if os.path.isdir(os.path.join(source, subdir_name)):
-                create_dir(os.path.join(dest, subdir_name))
-                self.process_sth_sth_demonstration(os.path.join(source, subdir_name), os.path.join(dest, subdir_name))
 
     def process_tasks(self, dir_name):
         source = os.path.join(self.source_dataset_path, dir_name)
@@ -557,15 +399,6 @@ class DatasetController:
             if subdir_name in self.reverse_annotations[int(dir_name)].keys():
                 create_dir(os.path.join(dest, subdir_name))
                 self.process_demonstration(os.path.join(source, subdir_name), os.path.join(dest, subdir_name))
-
-    def process_sth_sth_demonstration(self, dir_path, dest_path):
-        # Reading the actual images
-
-        for image_name in os.listdir(dir_path):
-            if not os.path.isfile(os.path.join(dest_path, str(int(image_name[:-4])) + '.npy')):
-                image = self.read_image(os.path.join(dir_path, image_name))
-                image = self.pre_process_image(image)
-                np.save(os.path.join(dest_path, str(int(image_name[:-4])) + '.npy'), image)
 
     def process_demonstration(self, dir_path, dest_path):
         create_dir(os.path.join(dest_path, 'robot'))
@@ -590,12 +423,6 @@ class DatasetController:
             if not os.path.isfile(dest_path + '-joints.npy'):
                 self.images_to_npy(dem_folder, dest_path, camera, timestamps=timestamps_robot, verify=False)
                 self.images_to_npy(dem_folder, dest_path, camera, isRobot='human', timestamps=None, verify=False)
-                # print 'folder ' + dem_folder + ' ' + camera + ' has ' + str(missing) + ' images/timestamps ' + \
-                #       str(len(valid_ts)) + ' ' + str(len(images))
-
-                # np.savez_compressed(dest_path + '-' + camera, images=images)
-                # else:
-                # print dest_path + '-' + camera + ' already compressed'
 
         joint_com_list = joint_pos.loc[joint_pos['timestamp'].isin(valid_ts)].values.tolist()
         np.save(dest_path + '-joints', joint_com_list)
@@ -705,13 +532,15 @@ def show_image(images):
 
 if __name__ == '__main__':
     DC = DatasetController(batch_size=6, sequence_input=1, sequence_output=0, read_jpgs=True)
-    # g = DC.get_next_batch(task='5002', channel_first=False, human=False, sth_sth=True, joint_history=10)
     g1 = DC.get_next_batch(task=['5001', '5002'], channel_first=True, human=False, from_start_prob=0, joint_history=0, camera='camera-1')
 
     while True:
         start = time.time()
         # robot_images, robot_paths, human_images, human_paths, sth_sth_images, sth_sth_paths, joints, noisy_joints, batch_one_hot, attention_labels, attention_gt = next(g)
-        to_ret_robot_images, to_ret_robot_images_orginals, to_ret_robot_images_cropped, robot_images_secondary, attention, robot_paths, to_ret_human_images, human_paths, to_ret_sth_sth_images, sth_sth_paths, batch_joints, noisy_joints, batch_one_hot, attention_sentence, objects, obj_one_hot, descriptions, desc_one_hot, wrong_obj_one_hot, wrong_desc_one_hot = next(g1)
+        to_ret_robot_images, to_ret_robot_images_orginals, attention, \
+        to_ret_human_images, to_ret_sth_sth_images, \
+        batch_joints, noisy_joints, batch_one_hot, \
+        objects, obj_one_hot, descriptions, desc_one_hot = next(g1)
         # show_image(to_ret_robot_images_orginals[1,0])
         # robot_images, robot_paths, human_images, human_paths, sth_sth_images, sth_sth_paths, joints = DC.get_next_batch(task='5001', sth_sth=True, human=True)
         # print(np.shape(robot_images), np.shape(human_images), np.shape(sth_sth_images), np.shape(joints))

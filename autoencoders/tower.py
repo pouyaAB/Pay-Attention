@@ -26,7 +26,7 @@ class Encoder_text_tower(chainer.Chain):
     Validation: We can check the reconstruction error metric, but we can also check this 
     with visual inspection of the reconstructed version for different HLP inputs
     """
-    def __init__(self, density=1, size=64, latent_size=100, channel=3, hidden_dim=100, num_objects=10, num_describtions=10):
+    def __init__(self, density=1, size=64, latent_size=100, channel=3, num_objects=10, num_descriptions=10):
         """
         density - a scaling factor for the number of channels in the convolutional layers. It is multiplied by at least
         16,32,64 and 128 as we go deeper. 
@@ -69,7 +69,7 @@ class Encoder_text_tower(chainer.Chain):
                                 initialW=Normal(0.02)),
             norm4=L.BatchNormalization(int(128 * density)),
 
-            toConv=L.Linear(num_objects + num_describtions, second_size * second_size * 7, initialW=Normal(0.02)),
+            toConv=L.Linear(num_objects + num_descriptions, second_size * second_size * 7, initialW=Normal(0.02)),
             mean=L.Linear(initial_size * initial_size * int(128 * density), latent_size,
                           initialW=Normal(0.02)),
             var=L.Linear(initial_size * initial_size * int(128 * density), latent_size,
@@ -120,13 +120,13 @@ class Generator_text(chainer.Chain):
     Validation: We can check the reconstruction error metric, but we can also check this 
     with visual inspection of the reconstructed version for different HLP inputs
     """
-    def __init__(self, density=1, size=64, latent_size=100, channel=3, num_objects=10, num_describtions=10):
+    def __init__(self, density=1, size=64, latent_size=100, channel=3, num_objects=10, num_descriptions=10):
         filter_size = 2
         intermediate_size = size / 8
         assert (size % 16 == 0)
         initial_size = size / 16
         super(Generator_text, self).__init__(
-            g0=L.Linear(num_objects + num_describtions, intermediate_size * intermediate_size * 7, initialW=Normal(0.02)),
+            g0=L.Linear(num_objects + num_descriptions, intermediate_size * intermediate_size * 7, initialW=Normal(0.02)),
             g1=L.Linear(latent_size, initial_size * initial_size * int(128 * density),
                         initialW=Normal(0.02)),
             norm1=L.BatchNormalization(initial_size * initial_size * int(128 * density)),
@@ -203,10 +203,10 @@ class Discriminator_texual(chainer.Chain):
 
     Validation: One can check the classification error for real and fake images  
     """
-    def __init__(self, density=1, size=64, channel=3, num_words=32, num_objects=10, num_describtions=10):
+    def __init__(self, density=1, size=64, channel=3, num_objects=10, num_descriptions=10):
         assert (size % 16 == 0)
         self.num_objects = num_objects
-        self.num_describtions = num_describtions
+        self.num_descriptions = num_descriptions
         initial_size = size / 16
         super(Discriminator_texual, self).__init__(
             dc1=L.Convolution2D(channel, int(16 * density), 4, stride=2, pad=1,
@@ -231,9 +231,9 @@ class Discriminator_texual(chainer.Chain):
                                 initialW=Normal(0.02)),
             norm4=L.BatchNormalization(int(128 * density)),
             dc5=L.Linear(initial_size * initial_size * int(128 * density), num_objects, initialW=Normal(0.02)),
-            dc6=L.Linear(initial_size * initial_size * int(128 * density), num_describtions, initialW=Normal(0.02)),
+            dc6=L.Linear(initial_size * initial_size * int(128 * density), num_descriptions, initialW=Normal(0.02)),
             dc8=L.Linear(initial_size * initial_size * int(128 * density), num_objects, initialW=Normal(0.02)),
-            dc9=L.Linear(initial_size * initial_size * int(128 * density), num_describtions, initialW=Normal(0.02)),
+            dc9=L.Linear(initial_size * initial_size * int(128 * density), num_descriptions, initialW=Normal(0.02)),
         )
 
     def __call__(self, x, att=True, train=True):

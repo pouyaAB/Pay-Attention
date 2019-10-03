@@ -1,7 +1,7 @@
 # from nf_model import ModelController
 # from nf_model_prednet import ModelController
 # from nf_model_generate_att_cycle_top_path_e2e import ModelController
-from nf_model_generate_att_cycle_top_path_e2e import ModelController
+from model_e2e import ModelController
 import argparse
 from local_config import config
 import signal

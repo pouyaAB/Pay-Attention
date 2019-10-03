@@ -14,7 +14,7 @@ class imageTransformer:
     Validation: The main function at the end of this file can be executed to see the before and
     after effects of the transformations.
     """
-    def __init__(self, patterns_folder_path, read_patterns=False):
+    def __init__(self, patterns_folder_path=None, read_patterns=False):
         self.patterns_folder_path = patterns_folder_path
         
         if read_patterns:
@@ -88,7 +88,7 @@ class imageTransformer:
         return np.array(res).reshape(8)
 
 if __name__ == '__main__':
-    IT = imageTransformer("/home/d3gan/development/datasets/record/patterns")
+    IT = imageTransformer()
     im = Image.open("/home/d3gan/development/datasets/record/sth_sth_224/test.jpg")
     im.show()
     result = IT.apply_homography(im, 1)
