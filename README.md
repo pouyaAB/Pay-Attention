@@ -13,37 +13,40 @@ In the project, the class `DatasetController` is responsible for reading and man
 
 ```
 - Dataset
- - 5001 (Picking up task)
- - dem1
- - human
- - camera-1
- - camera-2
- - camera-3
- - robot
- - camera-1
- - camera-2
- - t1.jpg
- - t2.jpg
- ...
- - tn.jpg
- - camera-3
- - dem2
- ...
- - demN
+    - 5001 (Picking up task)
+        - dem1
+            - human
+                - camera-1
+                - camera-2
+                - camera-3
+            - robot
+                - camera-1
+                - camera-2
+                    - t1.jpg
+                    - t2.jpg
+                    ...
+                    - tn.jpg
+                - camera-3
+        - dem2
+        ...
+        - demN
 
- dem1.txt
- dem2.txt
- ...
- demN.txt
- - 5002 (Pushing task)
- - dem1
- - dem2
- ...
- - demN
- dem1.txt
- dem2.txt
- ...
- demN.txt
+        dem1.txt
+        dem2.txt
+        ...
+        demN.txt
+        
+    - 5002 (Pushing task)
+        - dem1
+        - dem2
+        ...
+        - demN
+    
+        dem1.txt
+        dem2.txt
+        ...
+        demN.txt
+    
 ```
 # Prerequisites
 - Numpy
