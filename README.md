@@ -1,7 +1,7 @@
 # Pay Attention! Robustifying a Deep Visuomotor Policy through Task-Focused Visual Attention
 
 ## Dataset 
-Please download the dataset from this [link]().
+Please download the dataset from this [link](https://drive.google.com/file/d/1zo0DtuIjLWhFkpZdk9o-26tJ54iXg1pV/view?usp=sharing).
 
 In the downloaded dataset, you can find two folders. Each contains demonstrations (images and commands) for one task. Each demonstration folder contains a demonstration performed by controlling the robot and another folder a human performed the same task by hand. Most of the demonstrations are recorded from 3 different angles using 3 cameras.
 
